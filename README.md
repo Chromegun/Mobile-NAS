@@ -10,7 +10,8 @@
 
 ## 🚀 설치 방법
 터미널에서 아래 명령어를 한 줄만 입력하세요:
-```bash
+```
+bash
 curl -sSL https://raw.githubusercontent.com/Chromegun/Mobile-NAS/main/setup.sh | bash
 ```
 ```
