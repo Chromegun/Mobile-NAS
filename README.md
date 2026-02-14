@@ -12,3 +12,8 @@
 터미널에서 아래 명령어를 한 줄만 입력하세요:
 ```bash
 curl -sSL https://raw.githubusercontent.com/Chromegun/Mobile-NAS/main/setup.sh | bash
+```
+```
+Built with the help of Gemini AI.
+This project was co-authored with AI to ensure modularity and reliability.
+```
