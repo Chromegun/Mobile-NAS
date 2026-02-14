@@ -10,6 +10,14 @@ UI_FILE="/usr/local/lib/mobile-nas/ui.sh"
 SERV_FILE="/usr/local/lib/mobile-nas/services.sh"
 UTIL_FILE="/usr/local/lib/mobile-nas/utils.sh"
 
+# 1. 설정 파일 로드 (변수값들을 메모리에 올림)
+source $CONF_FILE
+
+# 2. 모듈 로드 (함수들을 메모리에 올림)
+source $UI_FILE
+source $SERV_FILE
+source $UTIL_FILE
+
 # 초기 무결성 확인 및 모듈 로드
 for f in "$CONF_FILE" "$UI_FILE" "$SERV_FILE" "$UTIL_FILE"; do
     [ ! -f "$f" ] && mkdir -p $(dirname "$f") && curl -sSL "$RAW_URL/$(basename $f)" -o "$f"
