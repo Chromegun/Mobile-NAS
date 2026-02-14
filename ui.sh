@@ -1,13 +1,15 @@
 #!/bin/sh
 BAR_WIDTH=40
+
 draw_line() { printf " %60s \n" " " | tr " " "="; }
 init_ui() { clear; tput civis; }
 close_ui() { tput cnorm; }
+
 draw_screen() {
     tput cup 0 0
     echo ""
     draw_line
-    printf " %-58s \n" "      🚀 $SERVER_NAME 가동 시스템"
+    printf " %-58s \n" "      🚀 $SERVER_NAME 관리 시스템 (v$VERSION)"
     draw_line
     echo "\n  현재 진행 상태:"
     local filled=$(($1 * BAR_WIDTH / 100))
