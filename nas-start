@@ -1,36 +1,62 @@
 #!/bin/sh
-. /etc/mobile-nas/config.conf
-. /usr/local/lib/mobile-nas/ui.sh
-. /usr/local/lib/mobile-nas/services.sh
+
+# GitHub 및 경로 정의
+GITHUB_USER="Chromegun"
+REPO="Mobile-NAS"
+RAW_URL="https://raw.githubusercontent.com/$GITHUB_USER/$REPO/main"
+
+CONF_FILE="/etc/mobile-nas/config.conf"
+UI_FILE="/usr/local/lib/mobile-nas/ui.sh"
+SERV_FILE="/usr/local/lib/mobile-nas/services.sh"
+UTIL_FILE="/usr/local/lib/mobile-nas/utils.sh"
+
+# 초기 무결성 확인 및 모듈 로드
+for f in "$CONF_FILE" "$UI_FILE" "$SERV_FILE" "$UTIL_FILE"; do
+    [ ! -f "$f" ] && mkdir -p $(dirname "$f") && curl -sSL "$RAW_URL/$(basename $f)" -o "$f"
+done
+
+. "$CONF_FILE"
+. "$UI_FILE"
+. "$SERV_FILE"
+. "$UTIL_FILE"
+
 export LANG=ko_KR.UTF-8
 export LC_ALL=ko_KR.UTF-8
 
+# 인자 처리
+case "$1" in
+    log) view_logs; exit 0 ;;
+    wizard) samba_wizard; echo "✅ 설정 완료"; exit 0 ;;
+esac
+
 init_ui
-draw_screen 10 "Samba 공유 서비스 활성화 중..."
-run_samba; STATUS_1=$?
-draw_screen 40 "네트워크 TUN 장치 설정 중..."
-run_network_tun; STATUS_2=$?
-draw_screen 70 "Tailscale 외부 접속 엔진 가동 중..."
-run_tailscale; STATUS_3=$?
-draw_screen 95 "시스템 최종 자가 진단 중..."
-tailscale up > /tmp/ts_up_err 2>&1
-TS_IP=$(tailscale ip -4 2>/dev/null)
-SAMBA_PROC=$(pgrep smbd)
-TS_CHECK=$(tailscale status | grep -E "linux|active|idle")
+draw_screen 10 "시스템 무결성 및 업데이트 확인 중..."
+check_integrity
+auto_update
+
+draw_screen 40 "Samba 설정 및 서비스 구성 중..."
+samba_wizard
+run_samba
+
+draw_screen 70 "네트워크 장치 및 외부 접속 엔진 가동 중..."
+run_network_tun
+run_tailscale
+
+draw_screen 100 "서버 가동 완료 및 상태 점검 중..."
 sleep 1
+
 close_ui
 clear
 draw_line
 printf " %-58s \n" "      ✅ $SERVER_NAME 가동 완료"
 draw_line
 echo ""
-if [ ! -z "$SAMBA_PROC" ] && [ $STATUS_3 -eq 0 ]; then
-    printf "  [실시간 서비스 상태]\n"
-    printf "  - Samba (내부 공유): %-15s\n" "정상 (✅)"
-    [ ! -z "$TS_CHECK" ] && printf "  - Tailscale (외부): %-15s\n" "연결됨 (✅)" || printf "  - Tailscale (외부): %-15s\n" "끊김 (❌)"
-    echo "\n  ▶ 내부 주소: $(hostname -I | awk '{print $1}')"
-    echo "  ▶ 외부 주소: ${TS_IP:-확인 불가}"
+if health_check; then
+    printf "  - 시스템 상태: %-15s\n" "안정적 (✅)"
+    printf "  - 내부 주소: %-15s\n" "$(hostname -I | awk '{print $1}')"
+    printf "  - 외부 주소: %-15s\n" "$(tailscale ip -4 2>/dev/null || echo '인증 필요')"
 else
-    echo "  ⚠️ 시스템 가동 중 실패가 감지되었습니다."
+    printf "  - 시스템 상태: %-15s\n" "이상 발생 (❌)"
+    echo "    명령어 'nas-start log'로 상세 에러를 확인하세요."
 fi
 draw_line
