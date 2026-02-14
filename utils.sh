@@ -1,34 +1,46 @@
 #!/bin/sh
 
-# [수정] nas-start가 찾는 이름으로 통일
+# [필수] 자동 업데이트 및 버전 동기화 함수
+auto_update() {
+    # 깃허브의 최신 버전 정보 가져오기
+    REMOTE_VER=$(curl -sSL "$RAW_URL/config.conf.default" | grep "VERSION=" | cut -d'"' -f2)
+    
+    if [ "$VERSION" != "$REMOTE_VER" ] && [ "$AUTO_UPDATE" = "true" ]; then
+        echo "▶ 새 로직 발견($REMOTE_VER). 기능 업데이트 중..."
+        
+        # 최신 로직 파일들만 다운로드
+        curl -sSL "$RAW_URL/ui.sh" -o /usr/local/lib/mobile-nas/ui.sh
+        curl -sSL "$RAW_URL/services.sh" -o /usr/local/lib/mobile-nas/services.sh
+        curl -sSL "$RAW_URL/utils.sh" -o /usr/local/lib/mobile-nas/utils.sh
+        curl -sSL "$RAW_URL/nas-start" -o /usr/local/bin/nas-start
+        chmod +x /usr/local/bin/nas-start /usr/local/lib/mobile-nas/*.sh
+        
+        # 로컬 설정 파일의 버전 번호 갱신 (무한 루프 방지 핵심!)
+        sed -i "s/VERSION=\"$VERSION\"/VERSION=\"$REMOTE_VER\"/" /etc/mobile-nas/config.conf
+        
+        echo "✅ 업데이트 완료! 시스템을 재시작합니다."
+        sleep 1
+        exec nas-start
+    fi
+}
+
+# Samba 설정 마법사 (탐색기 이름 오류 수정본)
 samba_wizard() {
     echo "▶ Samba 환경 설정 최적화 중..."
-    
-    # 변수가 비어있을 경우를 대비한 안전장치 (기본값 설정)
-    local PATH_FINAL="${SHARE_PATH:-/home/storage}"
-    local NAME_FINAL="${SHARE_NAME:-Mobile-Storage}"
-    local SERVER_FINAL="${SERVER_NAME:-Mobile-NAS}"
-
-    # Samba 설정 파일 생성
     cat <<EOF > /etc/samba/smb.conf
 [global]
    workgroup = WORKGROUP
-   server string = $SERVER_FINAL
-   netbios name = $SERVER_FINAL
+   server string = ${SERVER_NAME:-Mobile-NAS}
+   netbios name = ${SERVER_NAME:-Mobile-NAS}
    security = user
    map to guest = Bad User
-   proxy dns = no
 
-[$NAME_FINAL]
-   path = $PATH_FINAL
+[${SHARE_NAME:-Mobile-Storage}]
+   path = ${SHARE_PATH:-/home/storage}
    browsable = yes
    writable = yes
    guest ok = yes
    read only = no
    force user = root
 EOF
-    # 설정 반영을 위해 서비스 재시작
-    service smbd restart > /dev/null 2>&1
 }
-
-# (기타 auto_update 등의 함수는 그대로 유지)
