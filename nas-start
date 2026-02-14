@@ -1,0 +1,36 @@
+#!/bin/sh
+. /etc/mobile-nas/config.conf
+. /usr/local/lib/mobile-nas/ui.sh
+. /usr/local/lib/mobile-nas/services.sh
+export LANG=ko_KR.UTF-8
+export LC_ALL=ko_KR.UTF-8
+
+init_ui
+draw_screen 10 "Samba 공유 서비스 활성화 중..."
+run_samba; STATUS_1=$?
+draw_screen 40 "네트워크 TUN 장치 설정 중..."
+run_network_tun; STATUS_2=$?
+draw_screen 70 "Tailscale 외부 접속 엔진 가동 중..."
+run_tailscale; STATUS_3=$?
+draw_screen 95 "시스템 최종 자가 진단 중..."
+tailscale up > /tmp/ts_up_err 2>&1
+TS_IP=$(tailscale ip -4 2>/dev/null)
+SAMBA_PROC=$(pgrep smbd)
+TS_CHECK=$(tailscale status | grep -E "linux|active|idle")
+sleep 1
+close_ui
+clear
+draw_line
+printf " %-58s \n" "      ✅ $SERVER_NAME 가동 완료"
+draw_line
+echo ""
+if [ ! -z "$SAMBA_PROC" ] && [ $STATUS_3 -eq 0 ]; then
+    printf "  [실시간 서비스 상태]\n"
+    printf "  - Samba (내부 공유): %-15s\n" "정상 (✅)"
+    [ ! -z "$TS_CHECK" ] && printf "  - Tailscale (외부): %-15s\n" "연결됨 (✅)" || printf "  - Tailscale (외부): %-15s\n" "끊김 (❌)"
+    echo "\n  ▶ 내부 주소: $(hostname -I | awk '{print $1}')"
+    echo "  ▶ 외부 주소: ${TS_IP:-확인 불가}"
+else
+    echo "  ⚠️ 시스템 가동 중 실패가 감지되었습니다."
+fi
+draw_line
