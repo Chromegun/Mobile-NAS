@@ -1,1 +1,7 @@
-
+# Mobile NAS 기본 설정 템플릿 (v1.1.2)
+VERSION="1.1.2"
+SERVER_NAME="Mobile-NAS"
+SHARE_PATH="/home/storage"
+SHARE_NAME="Mobile-Storage"
+SOCKS_PORT="1055"
+AUTO_UPDATE="true"
