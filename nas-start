@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# GitHub 및 경로 정의
+# 1. GitHub 및 경로 정의
 GITHUB_USER="Chromegun"
 REPO="Mobile-NAS"
 RAW_URL="https://raw.githubusercontent.com/$GITHUB_USER/$REPO/main"
@@ -10,10 +10,16 @@ UI_FILE="/usr/local/lib/mobile-nas/ui.sh"
 SERV_FILE="/usr/local/lib/mobile-nas/services.sh"
 UTIL_FILE="/usr/local/lib/mobile-nas/utils.sh"
 
-# 1. 설정 파일 로드 (변수값들을 메모리에 올림)
-source $CONF_FILE
+# 2. 파일 불러오기 (이 순서가 중요합니다)
+[ -f "$CONF_FILE" ] && . "$CONF_FILE"
+[ -f "$UI_FILE" ] && . "$UI_FILE"
+[ -f "$SERV_FILE" ] && . "$SERV_FILE"
+[ -f "$UTIL_FILE" ] && . "$UTIL_FILE"
 
-# 2. 모듈 로드 (함수들을 메모리에 올림)
+# 3. 업데이트 체크 (10% 구간)
+auto_update
+
+source $CONF_FILE
 source $UI_FILE
 source $SERV_FILE
 source $UTIL_FILE
