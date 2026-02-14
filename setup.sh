@@ -18,18 +18,21 @@ echo "▶ 2. 필수 패키지 확인 및 설치 중..."
 apt update && apt install -y locales fonts-nanum psmisc net-tools curl samba tailscale > /dev/null 2>&1
 locale-gen ko_KR.UTF-8 > /dev/null 2>&1
 
-# 3. 깃허브에서 모든 모듈 다운로드 (utils.sh 포함!)
-echo "▶ 3. 최신 모듈 배포 중 (utils.sh 포함)..."
-curl -sSL "$RAW_URL/config.conf" -o /etc/mobile-nas/config.conf
+# 3. 설정 파일 확인 및 보호
+echo "▶ 3. 설정 파일 확인 및 보호 중..."
+if [ ! -f "/etc/mobile-nas/config.conf" ]; then
+    echo "   - 신규 설정을 생성합니다 (config.conf.default 기반)."
+    curl -sSL "$RAW_URL/config.conf.default" -o "/etc/mobile-nas/config.conf"
+else
+    echo "   - 기존 사용자 설정을 유지합니다. (보호됨)"
+fi
+
+# 4. 최신 로직 모듈 배포 (언제나 최신으로 업데이트)
+echo "▶ 4. 최신 로직 모듈 배포 중..."
 curl -sSL "$RAW_URL/ui.sh" -o /usr/local/lib/mobile-nas/ui.sh
 curl -sSL "$RAW_URL/services.sh" -o /usr/local/lib/mobile-nas/services.sh
 curl -sSL "$RAW_URL/utils.sh" -o /usr/local/lib/mobile-nas/utils.sh
 curl -sSL "$RAW_URL/nas-start" -o /usr/local/bin/nas-start
-
-# 4. 권한 부여
-echo "▶ 4. 실행 권한 설정 및 최적화..."
-chmod +x /usr/local/bin/nas-start
-chmod +x /usr/local/lib/mobile-nas/*.sh
 
 echo ""
 echo "=========================================="
