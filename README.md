@@ -14,6 +14,6 @@
 bash
 curl -sSL https://raw.githubusercontent.com/Chromegun/Mobile-NAS/main/setup.sh | bash
 ```
-* Built with the help of Gemini AI.*
-* This project was co-authored with AI to ensure modularity and reliability.*
+*Built with the help of Gemini AI.*
+*This project was co-authored with AI to ensure modularity and reliability.*
 
